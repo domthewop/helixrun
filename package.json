@@ -1,0 +1,29 @@
+{
+  "name": "helixrun",
+  "version": "0.1.0",
+  "description": "Twist, Turn, Launch: Your API journey starts with HelixRUN",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Dom Merenda <dmerenda@gmail.com>",
+  "license": "SEE LICENSE IN <LICENSE>",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.1",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/joi": "^17.2.3",
+    "@types/node": "^20.5.6",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
+  }
+}
