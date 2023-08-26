@@ -55,6 +55,12 @@ This project is licensed under the [HelixRUN License](./LICENSE), which may be m
 permissible than your use-case requires. You are encouraged to review the license prior to using 
 HelixRUN in a production setting.
 
+There's a [License FAQ](./LICENSE_FAQ.md) to explain some of our choices.
+
+## Roadmap
+
+For an overview of our trajectory and plans, please review the [Roadmap](./ROADMAP.md).
+
 [//]: # (## Community & Support)
 
 [//]: # ()
