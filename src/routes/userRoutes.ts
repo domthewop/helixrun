@@ -21,6 +21,27 @@ router.get('/', (req: Request, res: Response) => {
  */
 router.post('/create', async (req: Request, res: Response) => {
     /**
+     * Set up a placeholder object for errors from user creation
+     */
+    const errors: ValidationErrorMessages = {
+        username: [],
+        password: [],
+        email: []
+    };
+
+    /**
+     * Check if a user with the provided email already exists
+     */
+
+    const userRepository = getRepository(User);
+    const existingUser = await userRepository.findOne({ where:{ email: req.body.email } });
+
+    if (existingUser) {
+        errors.email.push('A user with this email already exists.');
+        return res.status(400).json(errors);
+    }
+
+    /**
      * Password validation rules with custom messages for each condition
      */
     const passwordValidation = {
@@ -70,15 +91,6 @@ router.post('/create', async (req: Request, res: Response) => {
     const { error } = userSchema.validate(req.body, { abortEarly: false });
 
     /**
-     * Set up a placeholder object for errors from validation
-     */
-    const errors: ValidationErrorMessages = {
-        username: [],
-        password: [],
-        email: []
-    };
-
-    /**
      * Process validation errors, if any, to create a structured error response
      */
     if (error) {
@@ -102,7 +114,7 @@ router.post('/create', async (req: Request, res: Response) => {
         return res.status(400).send(errors);
     } else {
         /**
-         * If validation passes, attempt to create the user in the database
+         * If email is unique and validation passes, attempt to create the user in the database
          */
         try {
             const userRepository = getRepository(User);
