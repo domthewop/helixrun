@@ -3,16 +3,49 @@ import { getRepository } from 'typeorm';
 import { User } from '../entities/Users';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = Router();
 
 /**
- * @route GET /
- * @description Return a list of users
- * @access Public
+ * User login route.
+ * @route POST /login
+ * @param req - Express user request with email and password
+ * @param res - Express response, returns JWT on successful login
+ * @returns JWT token or error message
  */
-router.get('/', (req: Request, res: Response) => {
-    res.send('List of users');
+router.post('/login', async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+
+    // Find the user by email
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { email } });
+
+    // If user not found, return error
+    if (!user) {
+        return res.status(401).json({ email: ['User not found'] });
+    }
+
+    // Check if the password is correct
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    // If password doesn't match, return error
+    if (!isMatch) {
+        return res.status(401).json({ password: ['Incorrect password'] });
+    }
+
+    // User is authenticated, create JWT token
+    const payload = {
+        userId: user.id,
+        email: user.email,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1h' });
+
+    return res.json({ token });
 });
 
 /**
