@@ -13,6 +13,12 @@ export class User {
     @Column()
     password: string;
 
+    @Column({ nullable: true })
+    resetPasswordToken: string;
+
+    @Column({ type: 'timestamp without time zone', nullable: true })
+    resetPasswordExpires: Date;
+
     @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
     createdAt!: Date;
 }

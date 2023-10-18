@@ -1,8 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { getRepository } from 'typeorm';
-import { User } from '../entities/Users';
+import {Request, Response, Router} from 'express';
+import {getRepository, MoreThan} from 'typeorm';
+import {User} from '../entities/Users';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -171,6 +172,115 @@ router.post('/create', async (req: Request, res: Response) => {
             return res.status(201).json(results);
         } catch (error) {
             return res.status(500).json({ error: error.message });
+        }
+    }
+});
+
+/**
+ * Initiate password reset process for a user.
+ * @route POST /request-reset
+ * @param req - Express user request with the user's email
+ * @param res - Express response
+ */
+router.post('/request-reset', async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    // Ensure email is provided and valid
+    if (!email || !Joi.string().email().validate(email).value) {
+        return res.status(400).json({ email: ['Email is required and must be valid'] });
+    }
+
+    const user = await getRepository(User).findOne({ where: { email } });
+
+    if (!user) {
+        return res.status(404).json({ email: ['User not found'] });
+    } else {
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        const resetExpires = new Date();
+        resetExpires.setHours(resetExpires.getHours() + 1); // Token expires in 1 hour
+
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = resetExpires;
+
+        await getRepository(User).save(user);
+
+        // TODO: Send an email with the resetToken
+
+        res.status(200).send('Password reset email sent.');
+    }
+});
+
+/**
+ * Handle password reset based on a provided reset token.
+ *
+ * @route POST /reset-password/:token
+ * @param {Request} req - Express request object with parameters and body.
+ * @param {Response} res - Express response object for sending back data to the user.
+ *
+ * @returns {Response} 200 - On successful password reset.
+ * @returns {Response} 400 - On invalid email format, invalid/expired reset token, or invalid new password.
+ * @returns {Response} 500 - On internal server errors.
+ */
+router.post('/reset-password/:token', async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    const resetToken = req.params.token;
+
+    // Ensure email is provided and valid
+    if (!email || !Joi.string().email().validate(email).value) {
+        return res.status(400).json({ email: ['Email is required and must be valid'] });
+    } else {
+        // Fetch the user with the provided email and reset token
+        const user = await getRepository(User).findOne({
+            where: {
+                email: email,
+                resetPasswordToken: resetToken,
+                resetPasswordExpires: MoreThan(new Date())
+            }
+        });
+
+        // Check if a valid user was found
+        if (!user) {
+            return res.status(400).json({token: ['Invalid or expired token, or user not found']});
+        }
+
+        // Hash the new password
+        user.password = await bcrypt.hash(password, 12);
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+
+        // Validate newPassword with Joi validation
+        const passwordSchema = Joi.string()
+            .required()
+            .messages({
+                'string.empty': 'Password cannot be empty',
+                'string.required': 'Password is required'
+            })
+            .pattern(new RegExp('^(?=.*[a-z])')) // at least one lowercase letter
+            .message('Password must contain at least one lowercase letter')
+            .pattern(new RegExp('^(?=.*[A-Z])')) // at least one uppercase letter
+            .message('Password must contain at least one uppercase letter')
+            .pattern(new RegExp('^(?=.*[0-9])')) // at least one number
+            .message('Password must contain at least one number')
+            .pattern(new RegExp('^(?=.*[!@#\$%\^&\*])')) // at least one special character
+            .message('Password must contain at least one special character')
+            .min(8)
+            .message('Password must be at least 8 characters long');
+
+        const {error} = passwordSchema.validate(password);
+
+        // Handle password validation errors
+        if (error) {
+            const errorMessage = error.details.map(detail => detail.message);
+            return res.status(400).json({error: errorMessage});
+        } else {
+            try {
+                // Save the updated user details
+                await getRepository(User).save(user);
+
+                res.status(200).send('Password successfully reset.');
+            } catch (error) {
+                return res.status(500).json({error: error.message});
+            }
         }
     }
 });

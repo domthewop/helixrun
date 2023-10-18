@@ -1,6 +1,6 @@
 {
   "name": "helixrun",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Twist, Turn, Launch: Your API journey starts with HelixRUN",
   "main": "index.js",
   "scripts": {
