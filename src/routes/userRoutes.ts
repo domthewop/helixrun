@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { getRepository } from 'typeorm';
 import { User } from '../entities/Users';
 import Joi from 'joi';
+import bcrypt from 'bcrypt';
 
 const router = Router();
 
@@ -116,6 +117,20 @@ router.post('/create', async (req: Request, res: Response) => {
         /**
          * If email is unique and validation passes, attempt to create the user in the database
          */
+
+        /**
+         * Salt and hash the password before saving to the database.
+         *
+         * @param password The user's plain text password.
+         * @returns A promise that resolves with the hashed password.
+         */
+        const hashPassword = async (password: string): Promise<string> => {
+            const saltRounds = 10; // Recommended number of salt rounds.
+            return bcrypt.hash(password, saltRounds);
+        };
+
+        req.body.password = await hashPassword(req.body.password);
+
         try {
             const userRepository = getRepository(User);
             const user = userRepository.create(req.body); // creates a user instance from request data
