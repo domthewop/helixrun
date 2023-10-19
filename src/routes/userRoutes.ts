@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
 import { MailgunService } from '../lib/email/MailgunService';
 
 dotenv.config();
@@ -165,17 +166,63 @@ router.post('/create', async (req: Request, res: Response) => {
         };
 
         req.body.password = await hashPassword(req.body.password);
+        const emailVerificationToken = uuidv4();
+
+        const newUser = {
+            email: req.body.email,
+            password: req.body.password,
+            emailVerificationToken: emailVerificationToken,
+            emailVerified: false
+        };
 
         try {
             const userRepository = getRepository(User);
-            const user = userRepository.create(req.body); // creates a user instance from request data
+            const user = userRepository.create(newUser); // creates a user instance from request data
             const results = await userRepository.save(user); // saves the user in the database
+
+            await sendVerificationEmail(req.body.email, emailVerificationToken);
+
             return res.status(201).json(results);
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
     }
 });
+
+/**
+ * Verify user email route.
+ * @route GET /verify-email/:token
+ * @param req - Express user request with unique verification token
+ * @param res - Express response, returns confirmation message on successful email verification
+ * @returns Confirmation message or error message
+ */
+router.get('/verify-email/:token', async (req: Request, res: Response) => {
+    const { token } = req.params;
+
+    // Find user by token
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({
+        where: {
+            emailVerificationToken: token
+        }
+    });
+
+    // If user not found, return error
+    if (!user) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+    } else {
+        // Mark email as verified and clear token
+        user.emailVerified = true;
+        user.emailVerificationToken = null;
+
+        // Save changes
+        await userRepository.save(user);
+
+        // Respond with success message
+        res.status(200).json({ message: 'Email successfully verified.' });
+    }
+});
+
 
 /**
  * Initiate password reset process for a user.
@@ -299,6 +346,26 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
     const subject = process.env.PASSWORD_RESET_SUBJECT;
     const text = process.env.PASSWORD_RESET_MSG + ' ' + resetLink;
     const html = '<p>' + process.env.PASSWORD_RESET_MSG + ` <a href="${resetLink}">${resetLink}</a></p>`;
+
+    return new Promise(async (resolve, reject) => {
+        const result = await mg.sendEmail(email, subject, html, text);
+        resolve(result);
+    });
+}
+
+/**
+ * Send a verification email to activate a new user account
+ *
+ * @param {string} email - The recipient's email address.
+ * @param {string} verificationToken - The email verification token.
+ */
+async function sendVerificationEmail(email: string, verificationToken: string) {
+    const mg = new MailgunService();
+    const verificationLink = process.env.EMAIL_VERIFICATION_URL + '?token=' + verificationToken;
+
+    const subject = process.env.EMAIL_VERIFICATION_SUBJECT;
+    const text = process.env.EMAIL_VERIFICATION_MSG + ' ' + verificationLink;
+    const html = '<p>' + process.env.EMAIL_VERIFICATION_MSG + ` <a href="${verificationLink}">${verificationLink}</a></p>`;
 
     return new Promise(async (resolve, reject) => {
         const result = await mg.sendEmail(email, subject, html, text);

@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryColumn,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn
+} from 'typeorm';
 
 @Entity("users")
 export class User {
@@ -18,6 +25,12 @@ export class User {
 
     @Column({ type: 'timestamp without time zone', nullable: true })
     resetPasswordExpires: Date;
+
+    @Column({ nullable: true })
+    emailVerificationToken: string;
+
+    @Column({ default: false })
+    emailVerified: boolean;
 
     @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
     createdAt!: Date;
