@@ -57,6 +57,15 @@ router.post('/login', async (req: Request, res: Response) => {
  */
 router.post('/create', async (req: Request, res: Response) => {
     /**
+     * Interface for potential validation errors that could be returned in the response
+     */
+    interface ValidationErrorMessages {
+        username?: string[];
+        password?: string[];
+        email?: string[];
+    }
+
+    /**
      * Set up a placeholder object for errors from user creation
      */
     const errors: ValidationErrorMessages = {
@@ -68,11 +77,10 @@ router.post('/create', async (req: Request, res: Response) => {
     /**
      * Check if a user with the provided email already exists
      */
-
     const userRepository = getRepository(User);
-    const existingUser = await userRepository.findOne({ where:{ email: req.body.email } });
+    const existingEmail = await userRepository.findOne({ where: { email: req.body.email } });
 
-    if (existingUser) {
+    if (existingEmail) {
         errors.email.push('A user with this email already exists.');
         return res.status(400).json(errors);
     }
@@ -88,14 +96,6 @@ router.post('/create', async (req: Request, res: Response) => {
         specialCharacter: Joi.string().pattern(new RegExp('(?=.*[!@#$%^&*])')).message('Password must contain at least one special character (e.g., @, #, $, %, ^, &, *).')
     };
 
-    /**
-     * Interface for potential validation errors that could be returned in the response
-     */
-    interface ValidationErrorMessages {
-        username?: string[];
-        password?: string[];
-        email?: string[];
-    }
 
     /**
      * JOI validation schema for incoming user data
