@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { MailgunService } from '../lib/email/MailgunService';
 
 dotenv.config();
 
@@ -204,9 +205,9 @@ router.post('/request-reset', async (req: Request, res: Response) => {
 
         await getRepository(User).save(user);
 
-        // TODO: Send an email with the resetToken
+        const result = await sendPasswordResetEmail(email, resetToken);
 
-        res.status(200).send('Password reset email sent.');
+        res.status(200).json({ result: result });
     }
 });
 
@@ -284,5 +285,25 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
         }
     }
 });
+
+/**
+ * Send a password reset email.
+ *
+ * @param {string} email - The recipient's email address.
+ * @param {string} resetToken - The password reset token.
+ */
+async function sendPasswordResetEmail(email: string, resetToken: string) {
+    const mg = new MailgunService();
+    const resetLink = process.env.PASSWORD_RESET_URL + '?token=' + resetToken;
+
+    const subject = process.env.PASSWORD_RESET_SUBJECT;
+    const text = process.env.PASSWORD_RESET_MSG + ' ' + resetLink;
+    const html = '<p>' + process.env.PASSWORD_RESET_MSG + ` <a href="${resetLink}">${resetLink}</a></p>`;
+
+    return new Promise(async (resolve, reject) => {
+        const result = await mg.sendEmail(email, subject, html, text);
+        resolve(result);
+    });
+}
 
 module.exports = router;
