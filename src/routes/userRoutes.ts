@@ -5,6 +5,7 @@ import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import { MailgunService } from '../lib/email/MailgunService';
@@ -352,6 +353,17 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
         resolve(result);
     });
 }
+
+/**
+ * Returns a decoded JWT, unauthorized if JWT cannot be decoded, or missing error if JWT not provided
+ * in Bearer authorization header
+ */
+router.post('/me', authMiddleware());
+router.post('/me', async (req: Request, res: Response) => {
+    // @ts-ignore
+    res.status(200).json({ result: req.userData });
+    /* TODO: Properly handle status codes */
+});
 
 /**
  * Send a verification email to activate a new user account
