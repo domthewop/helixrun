@@ -10,7 +10,7 @@ module.exports = () => {
         }
 
         let auth = req.headers.authorization;
-        if (!auth) return res.send('No authorization token found');
+        if (!auth) return res.errorUnauthorized('No authorization token found');
 
         jwtDecoder.getUserIdFromToken(process.env.JWT_SECRET, auth).then(user => {
             req.userId = user.id;
@@ -18,7 +18,7 @@ module.exports = () => {
             req.userData = user;
             next();
         }).catch(error => {
-            res.send(error);
+            res.errorBadRequest(error);
         });
     }
 

@@ -1,11 +1,12 @@
 import {Request, Response, Router} from 'express';
+const authMiddleware = require('../lib/middleware').mw.authMiddleware;
+const apiResponse = require('../lib/middleware/index').mw.responseMiddleware;
 import {getRepository, MoreThan} from 'typeorm';
 import {User} from '../entities/Users';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import { MailgunService } from '../lib/email/MailgunService';
@@ -13,6 +14,7 @@ import { MailgunService } from '../lib/email/MailgunService';
 dotenv.config();
 
 const router = Router();
+router.use(apiResponse());
 
 /**
  * User login route.
