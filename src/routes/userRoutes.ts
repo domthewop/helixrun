@@ -26,6 +26,10 @@ router.use(apiResponse());
 router.post('/login', async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).send('Email and password are required');
+    }
+
     // Find the user by email
     const userRepository = getRepository(User);
     const user = await userRepository.findOne({ where: { email } });
