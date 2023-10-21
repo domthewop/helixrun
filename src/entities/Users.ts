@@ -1,11 +1,12 @@
 import {
     Entity,
-    Column,
     PrimaryColumn,
-    PrimaryGeneratedColumn,
+    Column,
     CreateDateColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    OneToMany,
 } from 'typeorm';
+import { Subscription } from './Subscriptions';
 
 @Entity("users")
 export class User {
@@ -32,6 +33,9 @@ export class User {
     @Column({ default: false })
     emailVerified: boolean;
 
-    @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+    @OneToMany(() => Subscription, (subscription) => subscription.user)
+    subscriptions: Subscription[];
+
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;
 }

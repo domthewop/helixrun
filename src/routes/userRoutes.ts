@@ -1,8 +1,8 @@
-import {Request, Response, Router} from 'express';
+import { Request, Response, Router } from 'express';
 const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 const apiResponse = require('../lib/middleware/index').mw.responseMiddleware;
-import {getRepository, MoreThan} from 'typeorm';
-import {User} from '../entities/Users';
+import { getRepository, MoreThan } from 'typeorm';
+import { User } from '../entities/Users';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
