@@ -49,7 +49,7 @@ router.post('/login', async (req: Request, res: Response) => {
         email: user.email,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1h' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1d' });
 
     return res.json({ token });
 });
@@ -362,8 +362,8 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
  * Returns a decoded JWT, unauthorized if JWT cannot be decoded, or missing error if JWT not provided
  * in Bearer authorization header
  */
-router.post('/me', authMiddleware());
-router.post('/me', async (req: Request, res: Response) => {
+router.get('/me', authMiddleware());
+router.get('/me', async (req: Request, res: Response) => {
     // @ts-ignore
     res.status(200).json({ result: req.userData });
     /* TODO: Properly handle status codes */
