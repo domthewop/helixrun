@@ -279,6 +279,8 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
     // Ensure email is provided and valid
     if (!email || !Joi.string().email().validate(email).value) {
         return res.status(400).json({ email: ['Email is required and must be valid'] });
+    } else if (!password) {
+        return res.status(400).json({ password: ['Password is required'] });
     } else {
         // Fetch the user with the provided email and reset token
         const user = await getRepository(User).findOne({
