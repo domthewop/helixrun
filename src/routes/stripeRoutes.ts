@@ -1,7 +1,11 @@
-import { Request, Response, Router } from 'express';
+import express, { Request, Response, Router } from 'express';
 const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 const apiResponse = require('../lib/middleware/index').mw.responseMiddleware;
 import dotenv from 'dotenv';
+import { Subscription } from '../entities/Subscriptions';
+import {getRepository} from "typeorm";
+import {User} from "../entities/Users";
+import {exist} from "joi";
 
 dotenv.config();
 
@@ -52,6 +56,78 @@ router.post('/create-portal-session', async (req, res) => {
     });
 
     return res.status(200).json({ session: portalSession });
+});
+
+router.post('/webhook', async (req, res) => {
+    let event = req.body;
+    // Replace this endpoint secret with your endpoint's unique secret
+    // If you are testing with the CLI, find the secret by running 'stripe listen'
+    // If you are using an endpoint defined with the API or dashboard, look in your webhook settings
+    // at https://dashboard.stripe.com/webhooks
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (endpointSecret) {
+        // Get the signature sent by Stripe
+        const signature = req.headers['stripe-signature'];
+        try {
+            event = stripe.webhooks.constructEvent(
+                req.body,
+                signature,
+                endpointSecret
+            );
+        } catch (err) {
+            console.log('Webhook signature verification failed. ', err.message);
+            return res.sendStatus(400);
+        }
+    }
+
+    let invoice;
+    let subscriptionId;
+
+    // Handle the event
+    switch (event.type) {
+        case 'invoice.paid':
+            invoice = event.data.object;
+            subscriptionId = invoice.subscription;
+
+            console.log('invoice paid for sub id: ' + subscriptionId);
+
+            // Create the new subscription
+            const subscriptionRepository = getRepository(Subscription);
+
+            // Update subscription to active it one already exists
+            const existingSubscription = await subscriptionRepository.findOne({ where: { stripeSubscriptionId: subscriptionId } });
+
+            if (existingSubscription && invoice.status == 'paid') {
+                existingSubscription.status = 'active';
+                await subscriptionRepository.save(existingSubscription);
+            } else if (!existingSubscription && invoice.status == 'paid') {
+                const newSubscription = {
+                    userId: '746dc2fa-3fb1-4c77-8c33-8cd6c2d671ca',
+                    planId: '5d69a6c6-2f4e-435a-9900-24e6c5b3fd0f',
+                    stripeSubscriptionId: subscriptionId,
+                    status: 'active'
+                };
+
+                try {
+                    //@ts-ignore
+                    const subscription = subscriptionRepository.create(newSubscription);
+                    const results = await subscriptionRepository.save(subscription); // saves the user in the database
+console.log(results);
+                    return res.status(201).json(results);
+                } catch (error) {
+console.log(error);
+                    return res.status(500).json({ error: error.message });
+                }
+            }
+
+            break;
+        default:
+            // Unexpected event type
+            // console.log(`Unhandled event type ${event.type}.`);
+    }
+    // Return a 200 response to acknowledge receipt of the event
+    res.send();
 });
 
 module.exports = router;

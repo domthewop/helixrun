@@ -10,15 +10,16 @@ dotenv.config();
 // Create an instance of an Express app
 const app = express();
 
-// Middleware to parse JSON requests
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Starting the server
 const PORT = process.env.PORT || 3000;
 createConnection(config).then(async connection => {
 
+    // Middleware to send RAW requests to Stripe webhook route
+    app.use('/v0/billing/stripe/webhook', express.raw({ type: 'application/json' }));
+
+    // Middleware to parse JSON requests
     app.use(express.json());  // for parsing application/json
+    app.use(express.urlencoded({ extended: true }));
     require('./routes/router')(app);
 
     app.listen(PORT, () => {

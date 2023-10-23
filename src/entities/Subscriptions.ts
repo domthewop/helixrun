@@ -37,12 +37,6 @@ export class Subscription {
     @Column({ type: 'enum', enum: ['active', 'canceled', 'past_due', 'unpaid'] })
     status: 'active' | 'canceled' | 'past_due' | 'unpaid';
 
-    @Column({ type: 'timestamp' })
-    startDate: Date;
-
-    @Column({ type: 'timestamp' })
-    endDate: Date;
-
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;
 
