@@ -3,7 +3,6 @@ import {
     PrimaryColumn,
     Column,
     CreateDateColumn,
-    UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
 import { Subscription } from './Subscriptions';

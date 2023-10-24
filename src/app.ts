@@ -1,3 +1,5 @@
+/// <reference types="./custom" />
+
 import express from 'express';
 import "reflect-metadata"; // Required for TypeORM
 import { createConnection } from "typeorm";

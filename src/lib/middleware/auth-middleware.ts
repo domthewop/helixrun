@@ -18,7 +18,7 @@ module.exports = () => {
             req.userData = user;
             next();
         }).catch(error => {
-            res.errorBadRequest(error);
+            res.errorUnauthorized(error);
         });
     }
 

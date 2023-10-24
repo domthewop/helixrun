@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import { Subscription } from '../entities/Subscriptions';
 import {getRepository} from "typeorm";
 import {User} from "../entities/Users";
-import {exist} from "joi";
 
 dotenv.config();
 
@@ -90,8 +89,6 @@ router.post('/webhook', async (req, res) => {
             invoice = event.data.object;
             subscriptionId = invoice.subscription;
 
-            console.log('invoice paid for sub id: ' + subscriptionId);
-
             // Create the new subscription
             const subscriptionRepository = getRepository(Subscription);
 
@@ -113,10 +110,10 @@ router.post('/webhook', async (req, res) => {
                     //@ts-ignore
                     const subscription = subscriptionRepository.create(newSubscription);
                     const results = await subscriptionRepository.save(subscription); // saves the user in the database
-console.log(results);
+
                     return res.status(201).json(results);
                 } catch (error) {
-console.log(error);
+
                     return res.status(500).json({ error: error.message });
                 }
             }

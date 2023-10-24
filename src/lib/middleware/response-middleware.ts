@@ -1,8 +1,30 @@
-'use strict';
+const { getRepository } = require('typeorm');
+const { ErrorRecord } = require('../../entities/Errors');
 
 module.exports = () => {
 
     function apiResponse(req, res, next) {
+
+        async function logErrorToDatabase(code, message, stack, metadata) {
+            try {
+                const errorRecordRepository = getRepository(ErrorRecord);
+
+                const errorRecord = new ErrorRecord();
+                errorRecord.errorCode = code;
+                errorRecord.message = message;
+                errorRecord.stack = stack || '';
+                errorRecord.metadata = metadata || null;
+
+                // If the user is logged in, associate the error with the user
+                if (req.userData && req.userData['userId']) {
+                    errorRecord.user = req.userData['userId'];
+                }
+
+                await errorRecordRepository.save(errorRecord);
+            } catch (err) {
+                console.error('Failed to save error to database:', err);
+            }
+        }
 
         function _successResponse(code) {
             let shared = { status: 'success', code };
@@ -17,12 +39,20 @@ module.exports = () => {
 
         function _errorResponse(code, message) {
             let shared = { status: 'error', code, message };
-
-            return data => {
+            return async (data, metadata) => {
                 let response = data ? Object.assign(shared, { data }) : shared;
 
+                // Log error to database
+                await logErrorToDatabase(
+                    response.code,
+                    response.message,
+                    data?.stack,
+                    metadata);
+
+                // TODO: Log error to text file
+
                 res.status(response.code);
-                res.json(response);
+                res.json({ responseCode: response.code, responseMessage: response.message, shared, metadata });
             };
         }
 

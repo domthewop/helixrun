@@ -27,7 +27,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).send('Email and password are required');
+        return res.errorBadRequest(400, { context: 'email and password are required' });
     }
 
     // Find the user by email
@@ -36,7 +36,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // If user not found, return error
     if (!user) {
-        return res.status(401).json({ email: ['User not found'] });
+        return res.errorUnauthorized(401, { context: 'User not found' });
     }
 
     // Check if the password is correct
@@ -44,7 +44,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // If password doesn't match, return error
     if (!isMatch) {
-        return res.status(401).json({ password: ['Incorrect password'] });
+        return res.errorUnauthorized(401, { context: 'Incorrect password' });
     }
 
     // User is authenticated, create JWT token
@@ -368,9 +368,14 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
  */
 router.get('/me', authMiddleware());
 router.get('/me', async (req: Request, res: Response) => {
-    // @ts-ignore
     res.status(200).json({ result: req.userData });
     /* TODO: Properly handle status codes */
+});
+
+router.post('/error', authMiddleware());
+router.post('/error', async (req: Request, res: Response) => {
+    let errorMetaData = { user: req.userData }
+    res.errorBadGateway(null, errorMetaData );
 });
 
 /**
