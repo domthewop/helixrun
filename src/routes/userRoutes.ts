@@ -62,7 +62,7 @@ router.post('/login', async (req: Request, res: Response) => {
         email: user.email,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1d' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1w' });
 
     return res.json({ token });
 });
@@ -99,20 +99,26 @@ router.post('/create', async (req: Request, res: Response) => {
 
     if (existingEmail) {
         errors.email.push('A user with this email already exists.');
-        return res.status(400).json(errors);
+
+        return res.errorValidationFailed(400, {
+            userMessage: 'A user with this email already exists',
+            context: 'account_creation_email_exists',
+            validationErrors: errors
+        });
     }
 
     /**
      * Password validation rules with custom messages for each condition
      */
     const passwordValidation = {
+        /* TODO: Implement this to help DRY */
+
         length: Joi.string().min(8).max(128).message('Password should be between 8 and 128 characters long.'),
         lowercase: Joi.string().pattern(new RegExp('(?=.*[a-z])')).message('Password must contain at least one lowercase letter.'),
         uppercase: Joi.string().pattern(new RegExp('(?=.*[A-Z])')).message('Password must contain at least one uppercase letter.'),
         number: Joi.string().pattern(new RegExp('(?=.*[0-9])')).message('Password must contain at least one number.'),
-        specialCharacter: Joi.string().pattern(new RegExp('(?=.*[!@#$%^&*])')).message('Password must contain at least one special character (e.g., @, #, $, %, ^, &, *).')
+        specialCharacter: Joi.string().pattern(new RegExp('(?=.*[!?@#$%^&*])')).message('Password must contain at least one special character (e.g., @, #, $, %, ^, &, *).')
     };
-
 
     /**
      * JOI validation schema for incoming user data
@@ -131,7 +137,7 @@ router.post('/create', async (req: Request, res: Response) => {
             .message('Password must contain at least one uppercase letter')
             .pattern(new RegExp('^(?=.*[0-9])')) // at least one number
             .message('Password must contain at least one number')
-            .pattern(new RegExp('^(?=.*[!@#\$%\^&\*])')) // at least one special character
+            .pattern(new RegExp('^(?=.*[!?@#\$%\^&\*])')) // at least one special character
             .message('Password must contain at least one special character')
             .min(8)
             .message('Password must be at least 8 characters long'),
@@ -164,7 +170,11 @@ router.post('/create', async (req: Request, res: Response) => {
             }
         });
 
-        return res.status(400).send(errors);
+        return res.errorValidationFailed(400, {
+            userMessage: 'Account Creation Validation Failed',
+            context: 'account_creation_validation_failed',
+            validationErrors: errors
+        });
     } else {
         /**
          * If email is unique and validation passes, attempt to create the user in the database
@@ -225,7 +235,10 @@ router.get('/verify-email/:token', async (req: Request, res: Response) => {
 
     // If user not found, return error
     if (!user) {
-        return res.status(400).json({ error: 'Invalid or expired token' });
+        return res.errorBadRequest(400, {
+            userMessage: 'Invalid or Expired Reset Token',
+            context: 'password_reset_token_invalid_or_expired'
+        });
     } else {
         // Mark email as verified and clear token
         user.emailVerified = true;
@@ -327,7 +340,7 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
             .message('Password must contain at least one uppercase letter')
             .pattern(new RegExp('^(?=.*[0-9])')) // at least one number
             .message('Password must contain at least one number')
-            .pattern(new RegExp('^(?=.*[!@#\$%\^&\*])')) // at least one special character
+            .pattern(new RegExp('^(?=.*[!?@#\$%\^&\*])')) // at least one special character
             .message('Password must contain at least one special character')
             .min(8)
             .message('Password must be at least 8 characters long');
