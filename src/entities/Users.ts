@@ -4,7 +4,9 @@ import {
     Column,
     CreateDateColumn,
     OneToMany,
+    ManyToOne
 } from 'typeorm';
+import { Organization } from './Organizations';
 import { Subscription } from './Subscriptions';
 import { SubscriptionTier } from '../constants/SubscriptionTier';
 
@@ -32,6 +34,9 @@ export class User {
 
     @Column({ default: false })
     emailVerified: boolean;
+
+    @ManyToOne(() => Organization, (organization) => organization.users)
+    organization: Organization;
 
     @OneToMany(() => Subscription, (subscription) => subscription.user)
     subscriptions: Subscription[];

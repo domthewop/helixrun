@@ -2,7 +2,7 @@
 
 import express from 'express';
 import "reflect-metadata"; // Required for TypeORM
-import { createConnection } from 'typeorm';
+import AppDataSource from './db/db';
 import * as config from './ormconfig';
 import dotenv from 'dotenv';
 
@@ -14,8 +14,8 @@ const app = express();
 
 // Starting the server
 const PORT = process.env.PORT || 3000;
-createConnection(config).then(async connection => {
-
+AppDataSource.initialize()
+    .then(() => {
     // Middleware to send RAW requests to Stripe webhook route
     app.use('/v0/billing/stripe/webhook', express.raw({ type: 'application/json' }));
 

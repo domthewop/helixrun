@@ -31,5 +31,5 @@ export class ErrorRecord {
     metadata: string;
 
     @CreateDateColumn({ type: 'timestamp' })
-    createdAt: Date;
+    createdAt!: Date;
 }

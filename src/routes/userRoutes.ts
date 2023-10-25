@@ -3,7 +3,8 @@ const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 const apiResponse = require('../lib/middleware/index').mw.responseMiddleware;
 import { subscriptionMiddleware } from '../lib/middleware/subscription-middleware';
 import { SubscriptionTier, tierAccessLevels } from '../constants/SubscriptionTier';
-import { getRepository, MoreThan } from 'typeorm';
+import AppDataSource from '../db/db';
+import { MoreThan } from 'typeorm';
 import { User } from '../entities/Users';
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
@@ -36,8 +37,11 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     // Find the user by email
-    const userRepository = getRepository(User);
-    const user = await userRepository.findOne({ where: { email } });
+    const user = await AppDataSource.getRepository(User).findOne({
+        where: {
+            email: email,
+        }
+    });
 
     // If user not found, return error
     if (!user) {
@@ -96,8 +100,11 @@ router.post('/create', async (req: Request, res: Response) => {
     /**
      * Check if a user with the provided email already exists
      */
-    const userRepository = getRepository(User);
-    const existingEmail = await userRepository.findOne({ where: { email: req.body.email } });
+    const existingEmail = await AppDataSource.getRepository(User).findOne({
+        where: {
+            email: req.body.email,
+        },
+    });
 
     if (existingEmail) {
         errors.email.push('A user with this email already exists.');
@@ -204,7 +211,8 @@ router.post('/create', async (req: Request, res: Response) => {
         };
 
         try {
-            const userRepository = getRepository(User);
+            const userRepository = await AppDataSource.getRepository(User);
+
             const user = userRepository.create(newUser); // creates a user instance from request data
             const results = await userRepository.save(user); // saves the user in the database
 
@@ -228,7 +236,7 @@ router.get('/verify-email/:token', async (req: Request, res: Response) => {
     const { token } = req.params;
 
     // Find user by token
-    const userRepository = getRepository(User);
+    const userRepository = await AppDataSource.getRepository(User);
     const user = await userRepository.findOne({
         where: {
             emailVerificationToken: token
@@ -269,7 +277,11 @@ router.post('/request-reset', async (req: Request, res: Response) => {
         return res.status(400).json({ email: ['Email is required and must be valid'] });
     }
 
-    const user = await getRepository(User).findOne({ where: { email } });
+    const user = await AppDataSource.getRepository(User).findOne({
+        where: {
+            email,
+        }
+    });
 
     if (!user) {
         return res.status(404).json({ email: ['User not found'] });
@@ -281,7 +293,7 @@ router.post('/request-reset', async (req: Request, res: Response) => {
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = resetExpires;
 
-        await getRepository(User).save(user);
+        await AppDataSource.getRepository(User).save(user);
 
         const result = await sendPasswordResetEmail(email, resetToken);
 
@@ -311,12 +323,12 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
         return res.status(400).json({ password: ['Password is required'] });
     } else {
         // Fetch the user with the provided email and reset token
-        const user = await getRepository(User).findOne({
+        const user = await AppDataSource.getRepository(User).findOne({
             where: {
                 email: email,
                 resetPasswordToken: resetToken,
                 resetPasswordExpires: MoreThan(new Date())
-            }
+            },
         });
 
         // Check if a valid user was found
@@ -356,7 +368,7 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
         } else {
             try {
                 // Save the updated user details
-                await getRepository(User).save(user);
+                await AppDataSource.getRepository(User).save(user);
 
                 res.status(200).send('Password successfully reset.');
             } catch (error) {

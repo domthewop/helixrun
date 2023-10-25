@@ -1,4 +1,5 @@
-const { getRepository } = require('typeorm');
+import AppDataSource from "../../db/db";
+import {User} from "../../entities/Users";
 const { ErrorRecord } = require('../../entities/Errors');
 
 module.exports = () => {
@@ -6,8 +7,6 @@ module.exports = () => {
 
         async function logErrorToDatabase(code, message, stack, metadata) {
             try {
-                const errorRecordRepository = getRepository(ErrorRecord);
-
                 const errorRecord = new ErrorRecord();
                 errorRecord.errorCode = code;
                 errorRecord.message = message;
@@ -21,7 +20,9 @@ module.exports = () => {
 
                 if (!isIgnored(errorRecord)) {
                     try {
-                        await errorRecordRepository.save(errorRecord);
+                        const errorRecordRepository = await AppDataSource.getRepository(ErrorRecord);
+                        const record = await errorRecordRepository.create(errorRecord);
+                        const results = await errorRecordRepository.save(errorRecord);
                     } catch (err) {
                         console.error('Failed to save error to database:', err);
                     }

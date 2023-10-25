@@ -1,6 +1,6 @@
 import { SubscriptionTier, tierAccessLevels } from '../../constants/SubscriptionTier';
 import { User } from '../../entities/Users';
-import {getRepository} from "typeorm";
+import AppDataSource from '../../db/db';
 
 export function subscriptionMiddleware(requiredTiers: SubscriptionTier[]) {
     return (req, res, next) => {
@@ -9,8 +9,11 @@ export function subscriptionMiddleware(requiredTiers: SubscriptionTier[]) {
 }
 
 async function checkSubscription(requiredTiers: SubscriptionTier[], req, res, next) {
-    const userRepository = getRepository(User);
-    const user = await userRepository.findOne({ where: { id: req.userData.id } });
+    const user = await AppDataSource.getRepository(User).findOne({
+        where: {
+            id: req.userData.id,
+        }
+    });
 
     if (user && requiredTiers.some(tier => tierAccessLevels[user.subscriptionTier] >= tierAccessLevels[tier])) {
         next();
