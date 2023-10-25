@@ -20,7 +20,14 @@ module.exports = () => {
                     errorRecord.user = req.userData['userId'];
                 }
 
-                await errorRecordRepository.save(errorRecord);
+                if (!isIgnored(errorRecord)) {
+                    try {
+                        console.log('saving');
+                        await errorRecordRepository.save(errorRecord);
+                    } catch (err) {
+                        console.error('Failed to save error to database:', err);
+                    }
+                }
             } catch (err) {
                 console.error('Failed to save error to database:', err);
             }
@@ -83,3 +90,10 @@ module.exports = () => {
 
     return apiResponse;
 };
+
+function isIgnored(errorRecord): boolean {
+        return (errorRecord.errorCode == 400 && errorRecord.metadata.context == 'email_or_password_missing')
+            || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'incorrect_username_or_password')
+            || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'jwt_missing')
+            || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'jwt_invalid_or_expired');
+}

@@ -10,7 +10,12 @@ module.exports = () => {
         }
 
         let auth = req.headers.authorization;
-        if (!auth) return res.errorUnauthorized('No authorization token found');
+        if (!auth) {
+            return res.errorUnauthorized(401, {
+                userMessage: 'No JWT Found',
+                context: 'jwt_missing'
+            });
+        }
 
         jwtDecoder.getUserIdFromToken(process.env.JWT_SECRET, auth).then(user => {
             req.userId = user.id;
@@ -18,7 +23,10 @@ module.exports = () => {
             req.userData = user;
             next();
         }).catch(error => {
-            res.errorUnauthorized(error);
+            return res.errorUnauthorized(401, {
+                userMessage: 'JWT Authentication Invalid or Expired',
+                context: 'jwt_invalid_or_expired'
+            });
         });
     }
 

@@ -27,7 +27,10 @@ router.post('/login', async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.errorBadRequest(400, { context: 'email and password are required' });
+        return res.errorBadRequest(400, {
+            userMessage: 'Email and Password are required',
+            context: 'email_or_password_missing'
+        });
     }
 
     // Find the user by email
@@ -36,7 +39,10 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // If user not found, return error
     if (!user) {
-        return res.errorUnauthorized(401, { context: 'User not found' });
+        return res.errorUnauthorized(401, {
+            userMessage: 'Incorrect Username or Password',
+            context: 'incorrect_username_or_password'
+        });
     }
 
     // Check if the password is correct
@@ -44,7 +50,10 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // If password doesn't match, return error
     if (!isMatch) {
-        return res.errorUnauthorized(401, { context: 'Incorrect password' });
+        return res.errorUnauthorized(401, {
+            userMessage: 'Incorrect Username or Password',
+            context: 'incorrect_username_or_password'
+        });
     }
 
     // User is authenticated, create JWT token
