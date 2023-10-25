@@ -6,6 +6,7 @@ import {
     OneToMany,
 } from 'typeorm';
 import { Subscription } from './Subscriptions';
+import { SubscriptionTier } from '../constants/SubscriptionTier';
 
 @Entity("users")
 export class User {
@@ -34,6 +35,13 @@ export class User {
 
     @OneToMany(() => Subscription, (subscription) => subscription.user)
     subscriptions: Subscription[];
+
+    @Column({
+        type: 'enum',
+        enum: SubscriptionTier,
+        default: SubscriptionTier.FREE,
+    })
+    subscriptionTier: SubscriptionTier;
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;

@@ -27,7 +27,7 @@ export class ErrorRecord {
     @JoinColumn({ name: 'userId' })
     user: User | null;
 
-    @Column({ type: 'text' })
+    @Column({ type: 'text', nullable: true })
     metadata: string;
 
     @CreateDateColumn({ type: 'timestamp' })

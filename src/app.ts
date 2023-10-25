@@ -2,8 +2,8 @@
 
 import express from 'express';
 import "reflect-metadata"; // Required for TypeORM
-import { createConnection } from "typeorm";
-import * as config from "./ormconfig";
+import { createConnection } from 'typeorm';
+import * as config from './ormconfig';
 import dotenv from 'dotenv';
 
 // Initialize dotenv to load environment variables

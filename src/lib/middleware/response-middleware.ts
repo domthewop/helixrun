@@ -2,7 +2,6 @@ const { getRepository } = require('typeorm');
 const { ErrorRecord } = require('../../entities/Errors');
 
 module.exports = () => {
-
     function apiResponse(req, res, next) {
 
         async function logErrorToDatabase(code, message, stack, metadata) {
@@ -22,7 +21,6 @@ module.exports = () => {
 
                 if (!isIgnored(errorRecord)) {
                     try {
-                        console.log('saving');
                         await errorRecordRepository.save(errorRecord);
                     } catch (err) {
                         console.error('Failed to save error to database:', err);
