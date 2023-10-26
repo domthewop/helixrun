@@ -2,7 +2,8 @@ import {
     Entity,
     PrimaryColumn,
     Column,
-    OneToMany, CreateDateColumn,
+    OneToMany,
+    CreateDateColumn,
 } from 'typeorm';
 import { User } from './Users';
 import { OrganizationSubscriptionTier } from '../constants/OrganizationSubscriptionTier';

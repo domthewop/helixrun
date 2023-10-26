@@ -2,7 +2,7 @@ import { UserSubscriptionTier } from '../../constants/UserSubscriptionTier';
 import { User } from '../../entities/Users';
 import AppDataSource from '../../db/db';
 
-export function subscriptionMiddleware(requiredTiers: UserSubscriptionTier[]) {
+export function userSubscriptionMiddleware(requiredTiers: UserSubscriptionTier[]) {
     return (req, res, next) => {
         checkSubscription(requiredTiers, req, res, next);
     };

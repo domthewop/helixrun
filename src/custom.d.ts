@@ -25,5 +25,6 @@ declare module 'express' {
     export interface Request {
         userData: (data?: any) => void;
         userId: string;
+        organizationId?: string;
     }
 }

@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 const authMiddleware = require('../lib/middleware').mw.authMiddleware;
 const apiResponse = require('../lib/middleware/index').mw.responseMiddleware;
-import { subscriptionMiddleware } from '../lib/middleware/subscription-middleware';
+import { userSubscriptionMiddleware } from '../lib/middleware/user-subscription-middleware';
 import { UserSubscriptionTier } from '../constants/UserSubscriptionTier';
 import AppDataSource from '../db/db';
 import { MoreThan } from 'typeorm';
@@ -402,7 +402,7 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
  * Returns a decoded JWT, unauthorized if JWT cannot be decoded, or missing error if JWT not provided
  * in Bearer authorization header
  */
-router.get('/me', authMiddleware(), subscriptionMiddleware([UserSubscriptionTier.FREE, UserSubscriptionTier.PREMIUM, UserSubscriptionTier.PRO, UserSubscriptionTier.ENTERPRISE]));
+router.get('/me', authMiddleware(), userSubscriptionMiddleware([UserSubscriptionTier.FREE, UserSubscriptionTier.PREMIUM, UserSubscriptionTier.PRO, UserSubscriptionTier.ENTERPRISE]));
 router.get('/me', async (req: Request, res: Response) => {
     res.status(200).json({ result: req.userData });
 });
