@@ -91,10 +91,12 @@ module.exports = () => {
 };
 
 function isIgnored(errorRecord): boolean {
+    if (errorRecord && errorRecord.errorCode && errorRecord.metadata && errorRecord.metadata.context) {
         return (errorRecord.errorCode == 400 && errorRecord.metadata.context == 'email_or_password_missing')
             || (errorRecord.errorCode == 400 && errorRecord.metadata.context == 'account_creation_email_exists')
             || (errorRecord.errorCode == 400 && errorRecord.metadata.context == 'account_creation_validation_failed')
             || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'incorrect_username_or_password')
             || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'jwt_missing')
             || (errorRecord.errorCode == 401 && errorRecord.metadata.context == 'jwt_invalid_or_expired');
+    }
 }

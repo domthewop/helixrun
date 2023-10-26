@@ -5,7 +5,9 @@ import {
     OneToMany, CreateDateColumn,
 } from 'typeorm';
 import { User } from './Users';
-import { SubscriptionTier } from '../constants/SubscriptionTier';
+import { OrganizationSubscriptionTier } from '../constants/OrganizationSubscriptionTier';
+import { Subscription } from './Subscriptions';
+import { UserOrganization } from './UserOrganizations';
 
 @Entity("organizations")
 export class Organization {
@@ -17,14 +19,21 @@ export class Organization {
     @Column()
     name: string;
 
-    @Column({ type: 'enum', enum: SubscriptionTier })
-    subscriptionTier: SubscriptionTier;
+    @Column({
+        type: 'enum',
+        enum: OrganizationSubscriptionTier,
+        default: OrganizationSubscriptionTier.FREE,
+    })
+    subscriptionTier: OrganizationSubscriptionTier;
+
+    @OneToMany(() => Subscription, (subscription) => subscription.user)
+    subscriptions: Subscription[];
 
     @Column({ default: 0 })
     seats: number;
 
-    @OneToMany(() => User, (user) => user.organization)
-    users: User[];
+    @OneToMany(() => UserOrganization, userOrganization => userOrganization.organizationId)
+    userOrganizations: UserOrganization[];
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;

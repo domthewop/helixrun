@@ -8,7 +8,8 @@ import {
 } from 'typeorm';
 import { Organization } from './Organizations';
 import { Subscription } from './Subscriptions';
-import { SubscriptionTier } from '../constants/SubscriptionTier';
+import { UserSubscriptionTier } from '../constants/UserSubscriptionTier';
+import { UserOrganization } from './UserOrganizations';
 
 @Entity("users")
 export class User {
@@ -35,18 +36,18 @@ export class User {
     @Column({ default: false })
     emailVerified: boolean;
 
-    @ManyToOne(() => Organization, (organization) => organization.users)
-    organization: Organization;
+    @OneToMany(() => UserOrganization, userOrganization => userOrganization.userId)
+    userOrganizations: UserOrganization[];
 
-    @OneToMany(() => Subscription, (subscription) => subscription.user)
+    @OneToMany(() => Subscription, (subscription) => subscription.userId)
     subscriptions: Subscription[];
 
     @Column({
         type: 'enum',
-        enum: SubscriptionTier,
-        default: SubscriptionTier.FREE,
+        enum: UserSubscriptionTier,
+        default: UserSubscriptionTier.FREE,
     })
-    subscriptionTier: SubscriptionTier;
+    subscriptionTier: UserSubscriptionTier;
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;
